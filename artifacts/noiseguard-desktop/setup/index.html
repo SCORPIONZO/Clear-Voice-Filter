@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NoiseGuard — Установка</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, 'Inter', sans-serif;
+    background: #0a0a0f;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 40px 24px;
+    -webkit-app-region: drag;
+    user-select: none;
+  }
+
+  .no-drag { -webkit-app-region: no-drag; }
+
+  /* Logo */
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: rgba(0,212,216,.12);
+    border: 1px solid rgba(0,212,216,.25);
+    display: flex; align-items: center; justify-content: center;
+    color: #00d4d8;
+    font-size: 18px;
+  }
+  .logo-name {
+    font-size: 15px; font-weight: 800;
+    letter-spacing: .15em;
+    color: rgba(255,255,255,.9);
+  }
+
+  /* Card */
+  .card {
+    width: 100%;
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px;
+    padding: 28px 28px 24px;
+  }
+
+  h1 { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .subtitle {
+    font-size: 13px; color: rgba(255,255,255,.45);
+    line-height: 1.6; margin-bottom: 24px;
+  }
+  strong { color: rgba(255,255,255,.7); }
+
+  /* Status states */
+  .state { display: none; }
+  .state.active { display: block; }
+
+  /* Idle state */
+  #state-idle .btn-primary {
+    width: 100%;
+    background: rgba(0,212,216,.15);
+    border: 1px solid rgba(0,212,216,.35);
+    color: #00d4d8;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .08em;
+    cursor: pointer;
+    transition: background .2s;
+    margin-top: 4px;
+  }
+  #state-idle .btn-primary:hover {
+    background: rgba(0,212,216,.25);
+  }
+
+  /* Progress state */
+  .progress-label {
+    font-size: 12px; font-weight: 600;
+    color: rgba(255,255,255,.5);
+    letter-spacing: .08em;
+    margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .progress-pct { color: #00d4d8; font-family: 'JetBrains Mono', monospace; }
+  .progress-track {
+    width: 100%; height: 6px;
+    background: rgba(255,255,255,.07);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #00d4d8, #00a8b5);
+    border-radius: 3px;
+    width: 0%;
+    transition: width .4s ease;
+    box-shadow: 0 0 10px rgba(0,212,216,.4);
+  }
+  .progress-note {
+    font-size: 11px; color: rgba(255,255,255,.3);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .dot-pulse {
+    width: 6px; height: 6px; border-radius: 3px;
+    background: #00d4d8;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: .3; }
+    50% { opacity: 1; }
+  }
+
+  /* Done state */
+  #state-done .open-btn {
+    width: 100%;
+    background: rgba(0,212,216,.15);
+    border: 1px solid rgba(0,212,216,.35);
+    color: #00d4d8;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .08em;
+    cursor: pointer;
+    transition: background .2s;
+    margin-bottom: 10px;
+  }
+  #state-done .open-btn:hover { background: rgba(0,212,216,.25); }
+
+  /* Installer opened state */
+  #state-installer .box {
+    background: rgba(0,212,216,.08);
+    border: 1px solid rgba(0,212,216,.2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: rgba(0,212,216,.9);
+    line-height: 1.6;
+  }
+  #state-installer ol {
+    margin: 8px 0 0 16px;
+    color: rgba(255,255,255,.6);
+    font-size: 12px;
+    line-height: 1.8;
+  }
+
+  /* Error state */
+  #state-error .err-box {
+    background: rgba(239,68,68,.08);
+    border: 1px solid rgba(239,68,68,.2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 12px; color: rgba(239,68,68,.9);
+    line-height: 1.6; margin-bottom: 12px;
+  }
+  #state-error .retry-btn {
+    width: 100%;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    color: rgba(255,255,255,.6);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: background .2s;
+  }
+  #state-error .retry-btn:hover { background: rgba(255,255,255,.1); }
+
+  /* Skip link */
+  .skip {
+    margin-top: 20px;
+    font-size: 11px; color: rgba(255,255,255,.25);
+    text-align: center; cursor: pointer;
+    transition: color .2s;
+  }
+  .skip:hover { color: rgba(255,255,255,.5); }
+  .skip span { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="logo">
+  <div class="logo-icon">⟁</div>
+  <div class="logo-name">NOISEGUARD</div>
+</div>
+
+<div class="card no-drag">
+
+  <!-- IDLE: explain and offer to install -->
+  <div id="state-idle" class="state active">
+    <h1>Требуется виртуальный микрофон</h1>
+    <p class="subtitle">
+      NoiseGuard обрабатывает ваш микрофон в реальном времени, но чтобы
+      передавать очищенный звук в Битрикс24 и другие приложения,
+      нужен системный драйвер — <strong>BlackHole 2ch</strong> (103 КБ, бесплатно).
+      <br/><br/>
+      Нажмите кнопку — приложение загрузит и установит его автоматически.
+    </p>
+    <button class="btn-primary no-drag" onclick="startDownload()">
+      ЗАГРУЗИТЬ И УСТАНОВИТЬ BLACKHOLE
+    </button>
+  </div>
+
+  <!-- DOWNLOADING: progress bar -->
+  <div id="state-progress" class="state">
+    <h1>Загрузка BlackHole 2ch...</h1>
+    <p class="subtitle">
+      Загрузка с официального сервера. При медленном соединении
+      загрузка автоматически возобновится при обрыве.
+    </p>
+    <div class="progress-label">
+      <span>ЗАГРУЗКА</span>
+      <span class="progress-pct" id="pct">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-bar" id="bar"></div>
+    </div>
+    <div class="progress-note">
+      <div class="dot-pulse"></div>
+      <span id="progress-detail">Подключение...</span>
+    </div>
+  </div>
+
+  <!-- DONE: open installer -->
+  <div id="state-done" class="state">
+    <h1>Загрузка завершена ✓</h1>
+    <p class="subtitle">
+      Файл загружен. Нажмите кнопку — откроется стандартный установщик macOS.
+      Следуйте инструкциям и <strong>перезагрузите Mac</strong> после установки.
+    </p>
+    <button class="open-btn no-drag" id="open-btn">
+      ОТКРЫТЬ УСТАНОВЩИК BLACKHOLE
+    </button>
+  </div>
+
+  <!-- INSTALLER OPENED: post-install instructions -->
+  <div id="state-installer" class="state">
+    <h1>Установщик открыт</h1>
+    <div class="box">
+      Следуйте шагам установщика, затем:
+      <ol>
+        <li>Перезагрузите Mac</li>
+        <li>Системные настройки → Звук → Вывод → <strong>BlackHole 2ch</strong></li>
+        <li>Запустите NoiseGuard снова — всё будет готово</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- ERROR -->
+  <div id="state-error" class="state">
+    <h1>Ошибка загрузки</h1>
+    <div class="err-box" id="err-msg">Неизвестная ошибка</div>
+    <button class="retry-btn no-drag" onclick="startDownload()">
+      Повторить попытку
+    </button>
+  </div>
+
+</div>
+
+<div class="skip no-drag" onclick="skip()">
+  <span>Пропустить</span> — я установлю BlackHole самостоятельно
+</div>
+
+<script>
+  const api = window.electronAPI;
+  let pkgPath = null;
+
+  function show(id) {
+    document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
+    document.getElementById('state-' + id).classList.add('active');
+  }
+
+  function formatBytes(b) {
+    if (b < 1024) return b + ' Б';
+    return (b / 1024).toFixed(1) + ' КБ';
+  }
+
+  // Listen for progress events
+  api.onProgress(({ downloaded, total }) => {
+    const pct = Math.min(100, Math.round((downloaded / total) * 100));
+    document.getElementById('bar').style.width = pct + '%';
+    document.getElementById('pct').textContent = pct + '%';
+    document.getElementById('progress-detail').textContent =
+      formatBytes(downloaded) + ' / ' + formatBytes(total);
+  });
+
+  async function startDownload() {
+    // Prevent concurrent downloads — disable all action buttons immediately
+    document.querySelectorAll('button').forEach(b => { b.disabled = true; });
+    show('progress');
+    const result = await api.downloadBlackHole();
+
+    if (result.success) {
+      pkgPath = result.path;
+      show('done');
+      document.getElementById('open-btn').onclick = openInstaller;
+    } else {
+      document.getElementById('err-msg').textContent = result.error || 'Ошибка загрузки';
+      show('error');
+    }
+  }
+
+  async function openInstaller() {
+    if (!pkgPath) return;
+    const result = await api.installBlackHole(pkgPath);
+    if (result.success) {
+      show('installer');
+    } else {
+      document.getElementById('err-msg').textContent = result.error || 'Не удалось открыть установщик';
+      show('error');
+    }
+  }
+
+  async function skip() {
+    await api.skipSetup();
+  }
+</script>
+</body>
+</html>

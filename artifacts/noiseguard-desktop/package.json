@@ -1,0 +1,21 @@
+{
+  "name": "@workspace/noiseguard-desktop",
+  "version": "1.0.0",
+  "description": "NoiseGuard — AI Noise Suppressor (Desktop)",
+  "private": true,
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "NODE_ENV=development electron .",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "build:renderer": "PORT=5173 pnpm --filter @workspace/noiseguard run build",
+    "build": "pnpm build:renderer && pnpm build:electron",
+    "dist:mac": "pnpm build && electron-builder --mac",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.0",
+    "typescript": "^5.4.0"
+  }
+}

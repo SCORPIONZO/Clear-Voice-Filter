@@ -1,0 +1,33 @@
+appId: com.noiseguard.app
+productName: NoiseGuard
+copyright: Copyright © 2024 NoiseGuard
+
+directories:
+  output: release
+  buildResources: assets
+
+files:
+  - dist-electron/**/*
+  - setup/**/*
+
+extraResources:
+  - from: "../noiseguard/dist"
+    to: "renderer"
+    filter:
+      - "**/*"
+
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  category: public.app-category.utilities
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: assets/entitlements.mac.plist
+  entitlementsInherit: assets/entitlements.mac.plist
+  # icon: assets/icon.icns  # Uncomment and add icon file
+
+dmg:
+  title: "NoiseGuard ${version}"
+  background: assets/dmg-background.png
+  sign: false
