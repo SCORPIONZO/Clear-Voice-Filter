@@ -68,10 +68,10 @@ export function WaveformDisplay({ inAnalyser, outAnalyser }: WaveformDisplayProp
       <canvas ref={canvasRef} className="w-full h-full" />
       <div className="absolute top-2 left-3 flex items-center gap-3 text-xs font-mono">
         <div className="flex items-center gap-1.5 text-white/40">
-          <div className="w-2 h-2 rounded-full bg-white/30" /> RAW
+          <div className="w-2 h-2 rounded-full bg-white/30" /> ИСХОДНЫЙ
         </div>
         <div className="flex items-center gap-1.5 text-primary">
-          <div className="w-2 h-2 rounded-full bg-primary" /> CLEAN
+          <div className="w-2 h-2 rounded-full bg-primary" /> ЧИСТЫЙ
         </div>
       </div>
     </div>

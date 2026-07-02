@@ -47,7 +47,8 @@ export class NoiseProcessor {
   rnnoiseScriptNode: ScriptProcessorNode | null = null;
   outputGain: GainNode | null = null;
   monitorGain: GainNode | null = null;
-  
+  processedDestination: MediaStreamAudioDestinationNode | null = null;
+
   inAnalyser: AnalyserNode | null = null;
   outAnalyser: AnalyserNode | null = null;
 
@@ -154,10 +155,21 @@ export class NoiseProcessor {
       this.gateNode.connect(this.rnnoiseScriptNode);
     }
     
+    this.processedDestination = this.ctx.createMediaStreamDestination();
+
     this.rnnoiseScriptNode.connect(this.outputGain);
     this.outputGain.connect(this.outAnalyser);
     this.outAnalyser.connect(this.monitorGain);
+    this.outAnalyser.connect(this.processedDestination);
     this.monitorGain.connect(this.ctx.destination);
+  }
+
+  getRawStream(): MediaStream | null {
+    return this.stream;
+  }
+
+  getProcessedStream(): MediaStream | null {
+    return this.processedDestination?.stream ?? null;
   }
 
   stop() {
