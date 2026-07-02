@@ -8,11 +8,11 @@ import { WaveformDisplay } from '@/components/WaveformDisplay';
 import { SpectrumDisplay } from '@/components/SpectrumDisplay';
 import { TestRecording } from '@/components/TestRecording';
 import { dbToLinear } from '@/lib/utils';
+import { SetupGuide } from '@/components/SetupGuide';
 import {
-  Mic, Activity, Power, Settings2, ShieldCheck,
-  ChevronDown, MonitorSpeaker, Download, ExternalLink,
+  Mic, Activity, Power, Settings2,
+  MonitorSpeaker, ShieldCheck,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export function NoiseGuardApp() {
   const [isActive, setIsActive] = useState(false);
@@ -312,104 +312,7 @@ export function NoiseGuardApp() {
             </div>
           </div>
 
-          {/* Bitrix24 / BlackHole setup guide */}
-          <div className="bg-card border border-card-border rounded-xl overflow-hidden">
-            <button
-              onClick={() => setShowGuide(!showGuide)}
-              className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-primary" />
-                <span className="text-sm font-bold tracking-widest text-white/90">
-                  ИНТЕГРАЦИЯ С БИТРИКС24
-                </span>
-              </div>
-              <ChevronDown className={`w-4 h-4 text-white/50 transition-transform ${showGuide ? 'rotate-180' : ''}`} />
-            </button>
-
-            <AnimatePresence>
-              {showGuide && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="px-6 pb-6 space-y-5">
-                    <div className="h-px bg-white/5" />
-
-                    {/* Step 1 — download BlackHole */}
-                    <div className="space-y-3">
-                      <div className="text-xs font-bold tracking-widest text-white/50">
-                        ШАГ 1 — ВИРТУАЛЬНЫЙ АУДИО КАБЕЛЬ
-                      </div>
-                      <p className="text-sm text-white/60">
-                        Для передачи очищенного звука в Битрикс24 нужен бесплатный драйвер
-                        виртуального кабеля — <strong className="text-white/80">BlackHole 2ch</strong>.
-                        Он перехватывает обработанный NoiseGuard сигнал и подаёт его как микрофон
-                        в любое приложение.
-                      </p>
-                      <div className="flex flex-wrap gap-3">
-                        <a
-                          href="https://github.com/ExistentialAudio/BlackHole/releases/latest/download/BlackHole2ch.pkg"
-                          download
-                          className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-lg px-4 py-2.5 text-sm font-bold tracking-widest transition-colors"
-                        >
-                          <Download className="w-4 h-4" />
-                          СКАЧАТЬ BLACKHOLE 2CH
-                        </a>
-                        <a
-                          href="https://existential.audio/blackhole/"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/50 rounded-lg px-4 py-2.5 text-sm transition-colors"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          Официальный сайт
-                        </a>
-                      </div>
-                    </div>
-
-                    <div className="h-px bg-white/5" />
-
-                    {/* Steps 2-5 */}
-                    <div className="space-y-3">
-                      <div className="text-xs font-bold tracking-widest text-white/50">
-                        ШАГ 2–5 — НАСТРОЙКА МАРШРУТА
-                      </div>
-                      <ol className="space-y-3 text-sm text-white/60">
-                        <li className="flex gap-3">
-                          <span className="w-5 h-5 shrink-0 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-bold">2</span>
-                          Установите скачанный .pkg и перезагрузите Mac
-                        </li>
-                        <li className="flex gap-3">
-                          <span className="w-5 h-5 shrink-0 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-bold">3</span>
-                          Включите <strong className="text-white/80">Прямой мониторинг</strong> в NoiseGuard (переключатель выше)
-                        </li>
-                        <li className="flex gap-3">
-                          <span className="w-5 h-5 shrink-0 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-bold">4</span>
-                          В системных настройках macOS → Звук → Вывод →
-                          выберите <strong className="text-white/80">BlackHole 2ch</strong>
-                        </li>
-                        <li className="flex gap-3">
-                          <span className="w-5 h-5 shrink-0 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-bold">5</span>
-                          В Битрикс24 → Настройки звонка → Микрофон →
-                          выберите <strong className="text-white/80">BlackHole 2ch</strong>
-                        </li>
-                      </ol>
-                    </div>
-
-                    <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg text-primary/90 text-xs leading-relaxed">
-                      После настройки: Битрикс24 получает уже очищенный звук от NoiseGuard.
-                      Держите браузер с NoiseGuard открытым во время звонков.
-                      Движок работает в фоне — не надо ничего нажимать во время разговора.
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <SetupGuide open={showGuide} onToggle={() => setShowGuide(v => !v)} />
         </div>
       </main>
     </div>
