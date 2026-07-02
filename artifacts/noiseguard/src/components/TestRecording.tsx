@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, Square, Play, Pause, FlaskConical, CheckCircle2, AlertCircle } from 'lucide-react';
 
@@ -10,7 +10,7 @@ interface TestRecordingProps {
 
 type RecordingState = 'idle' | 'recording' | 'done';
 
-const RECORD_SECONDS = 6;
+const RECORD_SECONDS = 15;
 
 export function TestRecording({ rawStream, processedStream, isActive }: TestRecordingProps) {
   const [state, setState] = useState<RecordingState>('idle');
@@ -83,8 +83,19 @@ export function TestRecording({ rawStream, processedStream, isActive }: TestReco
 
   const reset = useCallback(() => {
     setState('idle');
-    setRawUrl(null);
-    setProcessedUrl(null);
+    setRawUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+    setProcessedUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+  }, []);
+
+  // Cleanup on unmount: stop recorders, clear timer, revoke object URLs
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (rawRecorderRef.current?.state === 'recording') rawRecorderRef.current.stop();
+      if (processedRecorderRef.current?.state === 'recording') processedRecorderRef.current.stop();
+      setRawUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+      setProcessedUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+    };
   }, []);
 
   const progress = ((RECORD_SECONDS - countdown) / RECORD_SECONDS) * 100;
