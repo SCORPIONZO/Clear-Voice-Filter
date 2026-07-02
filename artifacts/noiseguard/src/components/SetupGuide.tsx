@@ -2,90 +2,66 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Download, Copy, Check, Terminal, ExternalLink,
-  Apple, Monitor, ChevronDown, Info, AlertTriangle,
+  Apple, Monitor, ChevronDown, Info, AlertTriangle, RefreshCw,
 } from 'lucide-react';
 
-// ─── OS detection ────────────────────────────────────────────────────────────
 type OS = 'mac' | 'win' | 'linux' | 'unknown';
 
 function detectOS(): OS {
   const ua = navigator.userAgent.toLowerCase();
-  const platform = (navigator.platform || '').toLowerCase();
-  if (platform.includes('mac') || ua.includes('macintosh')) return 'mac';
-  if (platform.includes('win') || ua.includes('windows')) return 'win';
+  const p = (navigator.platform || '').toLowerCase();
+  if (p.includes('mac') || ua.includes('macintosh')) return 'mac';
+  if (p.includes('win') || ua.includes('windows')) return 'win';
   if (ua.includes('linux')) return 'linux';
   return 'unknown';
 }
 
-// ─── Scripts ─────────────────────────────────────────────────────────────────
-const SOUNDFLOWER_SCRIPT = `#!/usr/bin/env bash
+// ─── Shell scripts ────────────────────────────────────────────────────────────
+
+// Primary macOS script: curl with resume + retry, no Homebrew dependency
+const BH_CURL_SCRIPT = `#!/usr/bin/env bash
 # ============================================================
-#  NoiseGuard — автоустановка Soundflower (macOS)
-#  Soundflower — бесплатный виртуальный аудиокабель
-#  Скачивается с GitHub, работает быстро
+#  NoiseGuard — загрузка BlackHole 2ch с возобновлением
+#  Работает при медленном / нестабильном соединении
+#  Запустить: bash ~/Downloads/noiseguard-blackhole.sh
 # ============================================================
-set -e
+set -euo pipefail
+
+URL="https://existential.audio/downloads/BlackHole2ch-0.7.0.pkg"
+DEST="$HOME/Downloads/BlackHole2ch-0.7.0.pkg"
 
 echo ""
-echo "╔══════════════════════════════════════╗"
-echo "║  NoiseGuard · Установка Soundflower  ║"
-echo "╚══════════════════════════════════════╝"
+echo "╔══════════════════════════════════════════╗"
+echo "║  NoiseGuard · Загрузка BlackHole 2ch     ║"
+echo "╚══════════════════════════════════════════╝"
 echo ""
 
-# 1. Homebrew -------------------------------------------------------
-if ! command -v brew &>/dev/null; then
-  echo "► Homebrew не найден — устанавливаем..."
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  if [[ -f /opt/homebrew/bin/brew ]]; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-  fi
-else
-  echo "✓ Homebrew уже установлен"
-fi
-
-# 2. Soundflower ----------------------------------------------------
-if brew list --cask soundflower &>/dev/null 2>&1; then
-  echo "✓ Soundflower уже установлен"
-else
-  echo "► Устанавливаем Soundflower..."
-  brew install --cask soundflower
-fi
+# curl: -C - возобновить, --retry 10 повторить, --retry-delay 3 задержка
+echo "► Загружаем BlackHole 2ch (с возобновлением)..."
+curl -L -C - --retry 10 --retry-delay 3 --progress-bar \\
+     "$URL" -o "$DEST"
 
 echo ""
-echo "╔══════════════════════════════════════╗"
-echo "║  Установка завершена!                ║"
-echo "╚══════════════════════════════════════╝"
-echo ""
-echo "Следующие шаги:"
-echo "  1. Системные настройки → Звук → Вывод → Soundflower (2ch)"
-echo "  2. В NoiseGuard включите «Прямой мониторинг»"
-echo "  3. В Битрикс24 → Настройки → Микрофон → Soundflower (2ch)"
-echo ""
-echo "Готово. Держите NoiseGuard открытым во время звонков."
-`;
-
-const BLACKHOLE_SCRIPT = `#!/usr/bin/env bash
-# ============================================================
-#  NoiseGuard — скачать и установить BlackHole напрямую с GitHub
-#  (обход медленного сервера existential.audio)
-# ============================================================
-set -e
-
-VERSION="v0.6.0"
-PKG="BlackHole2ch.pkg"
-URL="https://github.com/ExistentialAudio/BlackHole/releases/download/\${VERSION}/\${PKG}"
-DEST="\$HOME/Downloads/\${PKG}"
-
-echo "► Скачиваем BlackHole \${VERSION} с GitHub CDN..."
-curl -L --progress-bar "\$URL" -o "\$DEST"
-
+echo "✓ Загрузка завершена: $DEST"
 echo "► Открываем установщик..."
-open "\$DEST"
+open "$DEST"
 
 echo ""
 echo "Установите пакет, перезагрузите Mac, затем:"
-echo "  Системные настройки → Звук → Вывод → BlackHole 2ch"
+echo "  1. Системные настройки → Звук → Вывод → BlackHole 2ch"
+echo "  2. В NoiseGuard: включить «Прямой мониторинг»"
+echo "  3. В Битрикс24 → Микрофон → BlackHole 2ch"
 `;
+
+function downloadScript(content: string, filename: string) {
+  const blob = new Blob([content], { type: 'text/x-sh' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 // ─── Copy button ─────────────────────────────────────────────────────────────
 function CopyButton({ text, label = 'Копировать' }: { text: string; label?: string }) {
@@ -108,60 +84,94 @@ function CopyButton({ text, label = 'Копировать' }: { text: string; la
   );
 }
 
-function CodeBlock({ code }: { code: string }) {
+function CodeBlock({ code, multiline = false }: { code: string; multiline?: boolean }) {
   return (
-    <div className="flex items-center gap-2 bg-black/60 border border-white/10 rounded-lg px-4 py-3">
-      <Terminal className="w-3.5 h-3.5 text-primary shrink-0" />
-      <code className="flex-1 text-xs font-mono text-primary/90 break-all">{code}</code>
+    <div className={`flex ${multiline ? 'flex-col gap-3' : 'items-center gap-2'} bg-black/60 border border-white/10 rounded-lg px-4 py-3`}>
+      <div className="flex items-start gap-2 flex-1 min-w-0">
+        <Terminal className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+        <code className="flex-1 text-xs font-mono text-primary/90 break-all whitespace-pre-wrap leading-relaxed">{code}</code>
+      </div>
       <CopyButton text={code} />
     </div>
   );
 }
 
-function downloadScript(content: string, filename: string) {
-  const blob = new Blob([content], { type: 'text/x-sh' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+// ─── macOS guide ─────────────────────────────────────────────────────────────
+const CURL_CMD =
+  'curl -L -C - --retry 10 --retry-delay 3 --progress-bar \\\n  "https://existential.audio/downloads/BlackHole2ch-0.7.0.pkg" \\\n  -o ~/Downloads/BlackHole2ch.pkg && open ~/Downloads/BlackHole2ch.pkg';
 
-// ─── macOS tab ───────────────────────────────────────────────────────────────
+const CURL_CMD_PLAIN =
+  'curl -L -C - --retry 10 --retry-delay 3 --progress-bar "https://existential.audio/downloads/BlackHole2ch-0.7.0.pkg" -o ~/Downloads/BlackHole2ch.pkg && open ~/Downloads/BlackHole2ch.pkg';
+
 function MacOSGuide() {
   return (
     <div className="space-y-5">
-      {/* Why needed */}
+      {/* Context */}
       <div className="flex gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
         <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-        <p className="text-xs text-amber-200/80 leading-relaxed">
-          Браузер не может создать виртуальный микрофон — это уровень ядра ОС.
-          Нужен один системный драйвер. Ниже — два варианта на выбор;
-          самый простой занимает <strong>30 секунд</strong>.
-        </p>
+        <div className="text-xs text-amber-200/80 leading-relaxed space-y-1">
+          <p>Браузер не может создать виртуальный микрофон — это уровень ядра ОС.</p>
+          <p>
+            Нужен <strong>BlackHole 2ch</strong> — единственный актуальный бесплатный
+            виртуальный аудиокабель для macOS. Файл весит <strong>103 КБ</strong>.
+          </p>
+        </div>
       </div>
 
-      {/* ── Option 1: Soundflower (recommended) ── */}
+      {/* Warning: don't use brew */}
+      <div className="flex gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+        <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+        <div className="text-xs text-red-300/80 leading-relaxed space-y-1">
+          <p>
+            <strong>Не используйте</strong>{' '}
+            <code className="bg-white/10 px-1 rounded">brew install blackhole-2ch</code> —
+            Homebrew скачивает с existential.audio без возобновления.
+            При медленном соединении будет таймаут.
+          </p>
+          <p>
+            <code className="bg-white/10 px-1 rounded">soundflower</code> устарел
+            и отключён в Homebrew с ноября 2025.
+          </p>
+        </div>
+      </div>
+
+      {/* Option A: curl with resume — RECOMMENDED */}
       <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4 space-y-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-bold text-white/90">Soundflower</span>
+          <span className="text-sm font-bold text-white/90">Способ A — Терминал с возобновлением</span>
           <span className="text-[10px] bg-green-500/20 text-green-400 border border-green-500/30 rounded px-2 py-0.5 font-mono tracking-wider">
-            РЕКОМЕНДУЕТСЯ · БЫСТРО
+            РЕКОМЕНДУЕТСЯ
           </span>
         </div>
+
         <p className="text-xs text-white/50 leading-relaxed">
-          Бесплатный виртуальный кабель. Скачивается с <strong className="text-white/70">GitHub CDN</strong> — быстро и надёжно.
-          Одна команда в Терминале — и готово.
+          <code className="bg-white/10 px-1 rounded">curl</code> с флагами{' '}
+          <code className="bg-white/10 px-1 rounded">-C -</code> (возобновление) и{' '}
+          <code className="bg-white/10 px-1 rounded">--retry 10</code> (10 попыток) —
+          докачает файл даже при обрывах соединения.
+          Вставьте команду в <strong className="text-white/70">Терминал</strong> и нажмите Enter:
         </p>
 
-        {/* Homebrew one-liner */}
-        <CodeBlock code="brew install --cask soundflower" />
+        <CodeBlock code={CURL_CMD} multiline />
 
-        {/* Script download */}
-        <div className="flex flex-wrap gap-2 pt-1">
+        <div className="flex items-center gap-2 pt-1">
+          <RefreshCw className="w-3 h-3 text-green-400 shrink-0" />
+          <span className="text-[11px] text-green-400/80">
+            Если прервалось — запустите ту же команду снова: докачает с места обрыва
+          </span>
+        </div>
+      </div>
+
+      {/* Option B: download script */}
+      <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
+        <span className="text-sm font-semibold text-white/70">Способ B — Скрипт-загрузчик</span>
+        <p className="text-xs text-white/40 leading-relaxed">
+          Скачайте готовый .sh скрипт — он сам запустит curl с нужными параметрами
+          и откроет установщик.
+        </p>
+        <div className="flex flex-wrap gap-2 items-center">
           <button
-            onClick={() => downloadScript(SOUNDFLOWER_SCRIPT, 'noiseguard-soundflower.sh')}
+            onClick={() => downloadScript(BH_CURL_SCRIPT, 'noiseguard-blackhole.sh')}
             className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-lg px-4 py-2 text-xs font-bold tracking-wider transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
@@ -169,98 +179,77 @@ function MacOSGuide() {
           </button>
           <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-xs font-mono text-white/40">
             <Terminal className="w-3 h-3" />
-            bash ~/Downloads/noiseguard-soundflower.sh
-            <CopyButton text="bash ~/Downloads/noiseguard-soundflower.sh" />
+            bash ~/Downloads/noiseguard-blackhole.sh
+            <CopyButton text="bash ~/Downloads/noiseguard-blackhole.sh" />
           </div>
-        </div>
-
-        {/* After install */}
-        <div className="pt-1 space-y-1.5 text-xs text-white/40">
-          <div className="font-semibold text-white/50 uppercase tracking-widest text-[10px]">После установки:</div>
-          {[
-            'Системные настройки → Звук → Вывод → Soundflower (2ch)',
-            'В NoiseGuard: включить «Прямой мониторинг»',
-            'В Битрикс24 → Микрофон → Soundflower (2ch)',
-          ].map((s, i) => (
-            <div key={i} className="flex gap-2">
-              <span className="text-primary font-bold">{i + 1}.</span> {s}
-            </div>
-          ))}
         </div>
       </div>
 
-      {/* ── Option 2: BlackHole direct from GitHub ── */}
+      {/* Option C: browser download */}
       <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-semibold text-white/70">BlackHole 2ch</span>
-          <span className="text-[10px] bg-white/10 text-white/40 border border-white/10 rounded px-2 py-0.5 font-mono tracking-wider">
-            АЛЬТЕРНАТИВА
-          </span>
-        </div>
+        <span className="text-sm font-semibold text-white/70">Способ C — Браузер</span>
+        <p className="text-xs text-white/40 leading-relaxed">
+          Скачайте .pkg через браузер напрямую с сайта. Браузер сам возобновит загрузку
+          при обрыве.
+        </p>
+        <a
+          href="https://existential.audio/downloads/BlackHole2ch-0.7.0.pkg"
+          className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 rounded-lg px-4 py-2 text-xs font-bold tracking-wider transition-colors"
+        >
+          <Download className="w-3.5 h-3.5" />
+          BlackHole2ch-0.7.0.pkg (103 КБ)
+        </a>
+      </div>
 
-        <div className="flex gap-2 items-start p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
-          <p className="text-[11px] text-red-300/80 leading-relaxed">
-            <code className="bg-white/10 px-1 rounded">brew install blackhole-2ch</code> скачивает
-            с медленного <strong>existential.audio</strong> — часто таймаут.
-            Вместо этого скачайте .pkg напрямую с GitHub:
-          </p>
-        </div>
+      {/* After install */}
+      <div className="h-px bg-white/5" />
+      <div className="space-y-2.5">
+        <div className="text-[10px] font-bold tracking-widest text-white/40 uppercase">После установки</div>
+        {[
+          'Перезагрузите Mac',
+          'Системные настройки → Звук → Вывод → BlackHole 2ch',
+          'В NoiseGuard: включить «Прямой мониторинг»',
+          'В Битрикс24 → Настройки → Микрофон → BlackHole 2ch',
+        ].map((s, i) => (
+          <div key={i} className="flex gap-2.5 text-sm text-white/60">
+            <span className="w-5 h-5 shrink-0 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-bold">{i + 1}</span>
+            {s}
+          </div>
+        ))}
+      </div>
 
-        <div className="flex flex-wrap gap-2">
-          <a
-            href="https://github.com/ExistentialAudio/BlackHole/releases/download/v0.6.0/BlackHole2ch.pkg"
-            className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 rounded-lg px-4 py-2 text-xs font-bold tracking-wider transition-colors"
-          >
-            <Download className="w-3.5 h-3.5" />
-            BlackHole2ch v0.6.0 (GitHub CDN)
-          </a>
-          <button
-            onClick={() => downloadScript(BLACKHOLE_SCRIPT, 'noiseguard-blackhole.sh')}
-            className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/50 rounded-lg px-4 py-2 text-xs transition-colors"
-          >
-            <Terminal className="w-3.5 h-3.5" />
-            Скрипт-загрузчик .sh
-          </button>
-          <a
-            href="https://github.com/ExistentialAudio/BlackHole/releases"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-white/30 hover:text-white/50 transition-colors px-2"
-          >
-            <ExternalLink className="w-3 h-3" />
-            Все релизы
-          </a>
-        </div>
+      <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg text-primary/90 text-xs leading-relaxed">
+        Держите NoiseGuard открытым в браузере во время звонков.
+        Битрикс24 будет слышать уже очищенный голос.
       </div>
     </div>
   );
 }
 
-// ─── Windows tab ─────────────────────────────────────────────────────────────
+// ─── Windows guide ───────────────────────────────────────────────────────────
 function WindowsGuide() {
   return (
     <div className="space-y-5">
       <div className="flex gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
         <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
         <p className="text-xs text-amber-200/80 leading-relaxed">
-          На Windows аналог — <strong>VB-Audio Virtual Cable</strong> (бесплатно).
-          Скачивается быстро, установка 2 минуты.
+          На Windows используется <strong>VB-Audio CABLE</strong> — бесплатный виртуальный кабель.
+          Загружается с официального сайта, установка 2 минуты.
         </p>
       </div>
 
       <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4 space-y-3">
-        <span className="text-sm font-bold text-white/90">VB-Cable</span>
+        <span className="text-sm font-bold text-white/90">VB-Audio CABLE</span>
         <ol className="space-y-2.5">
           {[
             <>Скачайте архив с официального сайта VB-Audio</>,
-            <>Распакуйте и запустите <code className="bg-white/10 px-1.5 py-0.5 rounded text-xs">VBCABLE_Setup_x64.exe</code> <strong className="text-white/70">от администратора</strong></>,
+            <>Распакуйте и запустите <code className="bg-white/10 px-1.5 py-0.5 rounded text-xs">VBCABLE_Setup_x64.exe</code> <strong className="text-white/70">от имени администратора</strong></>,
             <>Перезагрузите компьютер</>,
-            <>Настройки звука Windows → Запись → <strong className="text-white/80">CABLE Output</strong> → установить по умолчанию</>,
+            <>Панель управления → Звук → Запись → <strong className="text-white/80">CABLE Output</strong> → «По умолчанию»</>,
             <>Битрикс24 → Настройки → Микрофон → <strong className="text-white/80">CABLE Output (VB-Audio)</strong></>,
           ].map((step, i) => (
             <li key={i} className="flex gap-3 text-sm text-white/60">
-              <span className="w-5 h-5 shrink-0 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-bold mt-0.5">{i + 1}</span>
+              <span className="w-5 h-5 shrink-0 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-bold">{i + 1}</span>
               <span>{step}</span>
             </li>
           ))}
@@ -272,14 +261,9 @@ function WindowsGuide() {
           className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-lg px-4 py-2.5 text-sm font-bold tracking-wider transition-colors"
         >
           <Download className="w-4 h-4" />
-          СКАЧАТЬ VB-CABLE
+          СКАЧАТЬ VB-AUDIO CABLE
           <ExternalLink className="w-3 h-3 opacity-60" />
         </a>
-      </div>
-
-      <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg text-primary/90 text-xs leading-relaxed">
-        После установки держите NoiseGuard открытым в браузере во время звонков.
-        Включите «Прямой мониторинг» — Битрикс24 будет слышать только чистый голос.
       </div>
     </div>
   );
@@ -333,7 +317,6 @@ export function SetupGuide({ open, onToggle }: SetupGuideProps) {
             <div className="px-6 pb-6 space-y-4">
               <div className="h-px bg-white/5" />
 
-              {/* OS tabs */}
               <div className="flex gap-1 p-1 bg-black/40 rounded-lg border border-white/5 w-fit">
                 {(['mac', 'win'] as const).map((t) => (
                   <button
