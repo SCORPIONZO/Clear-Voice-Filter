@@ -1,0 +1,9 @@
+{
+  "buildCommand": "pnpm --filter @workspace/noiseguard run build",
+  "outputDirectory": "artifacts/noiseguard/dist/public",
+  "installCommand": "pnpm install",
+  "framework": null,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

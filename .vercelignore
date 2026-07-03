@@ -1,0 +1,13 @@
+# Exclude server-side and non-deployable artifacts
+artifacts/api-server
+artifacts/mockup-sandbox
+artifacts/noiseguard-desktop
+artifacts/noiseguard-ext
+
+# Build artefacts already handled by outputDirectory
+artifacts/noiseguard/dist
+
+# Replit-internal files
+.replit
+replit.nix
+.upm
