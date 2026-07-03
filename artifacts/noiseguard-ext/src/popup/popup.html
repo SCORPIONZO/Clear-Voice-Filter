@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NoiseGuard</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M2 10 Q4 5 6 10 Q8 15 10 10 Q12 5 14 10 Q16 15 18 10"
+            stroke="#00d4aa" stroke-width="2" stroke-linecap="round" fill="none"/>
+        </svg>
+        <span>NOISEGUARD</span>
+      </div>
+      <div class="version">v1.0</div>
+    </div>
+
+    <!-- Big toggle area -->
+    <div class="hero">
+      <div class="power-ring" id="powerRing">
+        <button class="power-btn" id="powerBtn" aria-label="Включить/выключить">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <path d="M16 4V16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M10 7.5A10 10 0 1 0 22 7.5" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" fill="none"/>
+          </svg>
+        </button>
+      </div>
+      <div class="hero-status" id="heroStatus">Выключен</div>
+      <div class="hero-sub" id="heroSub">Нажмите, чтобы включить</div>
+    </div>
+
+    <!-- DSP chain pills -->
+    <div class="chain" id="chain">
+      <div class="pill">HPF 80Hz</div>
+      <div class="arrow">→</div>
+      <div class="pill">Шумоворота</div>
+      <div class="arrow">→</div>
+      <div class="pill">Компрессор</div>
+    </div>
+
+    <!-- Works with section -->
+    <div class="works-with">
+      <div class="works-title">Работает в</div>
+      <div class="platforms">
+        <span class="platform">Zoom</span>
+        <span class="dot">·</span>
+        <span class="platform">Google Meet</span>
+        <span class="dot">·</span>
+        <span class="platform">Битрикс24</span>
+        <span class="dot">·</span>
+        <span class="platform">Teams</span>
+      </div>
+      <div class="works-note">и в любом другом браузерном сервисе</div>
+    </div>
+
+    <!-- Divider -->
+    <div class="divider"></div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <button class="open-btn" id="openBtn">Открыть приложение →</button>
+    </div>
+
+  </div>
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

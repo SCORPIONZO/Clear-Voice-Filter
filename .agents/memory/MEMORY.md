@@ -1,0 +1,2 @@
+- [Chrome Extension Architecture](ext-architecture.md) — getUserMedia hook via content→inject nonce channel; race fix via 600ms polling queue
+- [Electron BlackHole download](electron-blackhole.md) — HTTP resume+retry; validate pkgPath to temp dir; download mutex; 200 vs 206 handling

@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "NoiseGuard – AI Noise Suppressor",
+  "short_name": "NoiseGuard",
+  "version": "1.0.0",
+  "description": "Профессиональное нейросетевое подавление шума в Zoom, Google Meet, Битрикс24 и любых других звонках",
+  "icons": {
+    "16":  "icons/16.png",
+    "48":  "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "NoiseGuard"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js", "worklet.js", "icons/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "permissions": ["storage", "tabs"],
+  "host_permissions": ["<all_urls>"]
+}

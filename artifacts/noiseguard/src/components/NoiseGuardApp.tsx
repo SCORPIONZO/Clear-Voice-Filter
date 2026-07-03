@@ -35,6 +35,7 @@ export function NoiseGuardApp() {
   const [selectedDevice, setSelectedDevice] = useState<string>('');
 
   const [showGuide, setShowGuide] = useState(false);
+  const [extActive, setExtActive] = useState(false);
 
   useEffect(() => {
     navigator.mediaDevices.enumerateDevices().then(devs => {
@@ -44,6 +45,13 @@ export function NoiseGuardApp() {
         setSelectedDevice(audioIns[0].deviceId);
       }
     }).catch(() => {});
+  }, []);
+
+  // Detect browser extension
+  useEffect(() => {
+    const onExt = () => setExtActive(true);
+    window.addEventListener('NOISEGUARD_EXT_PRESENT', onExt);
+    return () => window.removeEventListener('NOISEGUARD_EXT_PRESENT', onExt);
   }, []);
 
   // Teardown on unmount
@@ -312,7 +320,7 @@ export function NoiseGuardApp() {
             </div>
           </div>
 
-          <SetupGuide open={showGuide} onToggle={() => setShowGuide(v => !v)} />
+          <SetupGuide open={showGuide} onToggle={() => setShowGuide(v => !v)} extActive={extActive} />
         </div>
       </main>
     </div>
